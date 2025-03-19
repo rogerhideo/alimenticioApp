@@ -132,6 +132,17 @@ export abstract class Model {
     }
   }
 
+  public static async exists(): Promise<boolean> {
+    try {
+      let sql = `SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${this.tableName}'`;
+      let results = await DbHelper.execute(sql);
+
+      return results[0].rows.length > 0;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   public static async findByColumn<T>(column: string, value: number | string, columnType: SearchType = 'string'): Promise<IFindResponse<any>> {
     let response: any = {};
     try {
