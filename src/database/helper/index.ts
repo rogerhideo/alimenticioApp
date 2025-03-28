@@ -1,12 +1,11 @@
-import {connectToDatabase} from '../connection';
-import {Snack} from '../../components/snack';
+import {getDbConnection} from '../connection';
 import {ResultSet} from 'react-native-sqlite-storage';
 
 export class DbHelper {
   static async get<T>(sql: string, params?: any[]): Promise<T[]> {
     let retorno: T[] = [];
     try {
-      let db = await connectToDatabase();
+      let db = await getDbConnection();
       let [result] = await db.executeSql(sql, params ? params.flat() : []);
       retorno = result.rows.length > 0 ? result.rows.raw() : retorno;
 
@@ -19,7 +18,7 @@ export class DbHelper {
 
   static async find<T>(sql: string, params?: any[]): Promise<T | undefined> {
     try {
-      let db = await connectToDatabase();
+      let db = await getDbConnection();
       let results = await db.executeSql(sql, params ? params.flat() : []);
 
       let response: any = {};
@@ -36,7 +35,7 @@ export class DbHelper {
 
   static async execute(sql: string, params?: any[]): Promise<ResultSet[]> {
     try {
-      let db = await connectToDatabase();
+      let db = await getDbConnection();
       return await db.executeSql(sql, params ? params.flat() : []);
     } catch (error) {
       console.error('DbHelper.execute()', error);

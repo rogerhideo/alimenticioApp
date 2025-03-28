@@ -2,7 +2,7 @@ import {enablePromise, openDatabase} from 'react-native-sqlite-storage';
 
 enablePromise(true);
 
-export const connectToDatabase = async () => {
+export const getDbConnection = async () => {
   return openDatabase(
     {name: 'testeAlimenticio.db', location: 'default'},
     () => {},

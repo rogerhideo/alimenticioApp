@@ -1,6 +1,5 @@
 import { DbHelper } from "../helper";
 import { ResultSet } from "react-native-sqlite-storage";
-import { insertsPlaceholder } from "../../utils";
 import { IFindResponse } from "../../types/utils";
 
 export type ColumnType = 'INTEGER' | 'TEXT' | 'TEXT PRIMARY KEY' | 'INTEGER PRIMARY KEY' | 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -332,9 +331,9 @@ export abstract class Model {
 
     // para itens em que a primaryKey é auto increment e ela não deve ser inclusa no script
     let columns = insertWithPrmaryKey ? Object.keys(this.schema) : Object.keys(this.schema).filter(column => column !== this.primaryKey);
-    let template = insertsPlaceholder(columns.length, values.length);
+    let bindingTemplate = this.mountInsertBindingTemplate(columns.length, values.length);
 
-    let sql =  `INSERT OR REPLACE INTO ${this.table} (${columns.join(', ')}) VALUES ${template}`;
+    let sql =  `INSERT OR REPLACE INTO ${this.table} (${columns.join(', ')}) VALUES ${bindingTemplate}`;
     let params: any [] = this.mountInsertArray(values, integerColumns, columns);
 
     return {sql, params};
@@ -396,5 +395,10 @@ export abstract class Model {
   private static isIntegerColumn(column: keyof typeof this.schema): boolean  {
     let columnType = this.schema[column];
     return columnType.includes('INTEGER');
+  }
+
+  private static mountInsertBindingTemplate(columnsLength: number, insertsLength: number): string  {
+    let oneItemTemplate = Array(columnsLength).fill('?').join(', ');
+    return Array(insertsLength).fill(`(${oneItemTemplate})`).join(', '); // bindig template pra insert de todos itens
   }
 }
