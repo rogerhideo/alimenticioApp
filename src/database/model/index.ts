@@ -1,6 +1,5 @@
 import { DbHelper } from "../helper";
 import { ResultSet } from "react-native-sqlite-storage";
-import { IFindResponse } from "../../types/utils";
 
 export type ColumnType = 'INTEGER' | 'TEXT' | 'TEXT PRIMARY KEY' | 'INTEGER PRIMARY KEY' | 'INTEGER PRIMARY KEY AUTOINCREMENT';
 
@@ -30,25 +29,22 @@ export abstract class Model {
     }
   }
 
-  public static async get<T>(sql: string, params?: any[]): Promise<any[]> {
+  public static async get<T>(sql: string, params?: any[]): Promise<T[]> {
     return await DbHelper.get<T>(sql, params);
   }
 
-  public static async first<T>(sql: string, params?: any[]): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async first<T>(sql: string, params?: any[]): Promise<T | null> {
     try {
-      sql += sql.toLowerCase().includes('limit') ? '': ' LIMIT 1';
+      sql += sql.toLowerCase().includes('limit') ? '' : ' LIMIT 1';
       let retornoQuery = await DbHelper.find<T>(sql, params);
-      response = retornoQuery ?? response;
-
-      return {success: Object.keys(response).length > 0, data: response};
+      return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.first() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
-  public static async all<T>(limit?: number): Promise<any[]> {
+  public static async all<T>(limit?: number): Promise<T[]> {
     try {
       let sql = `SELECT * FROM ${this.table}`;
       sql += limit ? ` LIMIT ${limit}` : '';
@@ -58,23 +54,20 @@ export abstract class Model {
       console.error('Model.all() -->', error);
       return [];
     }
-  };
+  }
 
-  public static async find<T>(id: number | string): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async find<T>(id: number | string): Promise<T | null> {
     try {
       let sql = `SELECT * FROM ${this.table} WHERE ${this.primaryKey} = ? `;
       sql += ' LIMIT 1';
 
       let retornoQuery = await DbHelper.find<T>(sql, [id]);
-      response = retornoQuery ?? response;
-
-      return {success: Object.keys(response).length > 0, data: response};
+      return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.find() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
   public static async delete(ids: number | number[] | string | string[]): Promise<boolean> {
     try {
@@ -107,7 +100,7 @@ export abstract class Model {
     }
   }
 
-  public static async where<T>(column: keyof typeof this.schema, values: number | number[] | string | string[]): Promise<any[]> {
+  public static async where<T>(column: keyof typeof this.schema, values: number | number[] | string | string[]): Promise<T[]> {
     try {
       let valuesToSeach: (string | number)[] = Array.isArray(values) ? values : [values];
       if (valuesToSeach.length > 0) {
@@ -122,9 +115,9 @@ export abstract class Model {
       console.error('Model.where() -->', error);
       return [];
     }
-  };
+  }
 
-  public static async whereNot<T>(column: keyof typeof this.schema, values: number | number[] | string | string[]): Promise<any[]> {
+  public static async whereNot<T>(column: keyof typeof this.schema, values: number | number[] | string | string[]): Promise<T[]> {
     try {
       let valuesToSeach: (string | number)[] = Array.isArray(values) ? values : [values];
       if (valuesToSeach.length > 0) {
@@ -213,11 +206,11 @@ export abstract class Model {
       console.error('Model.exists() -->', error);
       throw error;
     }
-  };
+  }
 
-  public static async getWhereRaw<T>(condition: string):  Promise<any[]> {
+  public static async getWhereRaw<T>(condition: string):  Promise<T[]> {
     if (condition) {
-      let sql =  `SELECT * FROM ${this.table}`;
+      let sql = `SELECT * FROM ${this.table}`;
       sql += condition.toLowerCase().includes('where') ? '' : ' WHERE';
       sql += ' ' + condition;
 
@@ -226,7 +219,7 @@ export abstract class Model {
     return [];
   }
 
-  public static async getLike<T>(column: keyof typeof this.schema, value: number | string):  Promise<any[]> {
+  public static async getLike<T>(column: keyof typeof this.schema, value: number | string):  Promise<T[]> {
     let sql = `SELECT * FROM ${this.table} WHERE `;
     sql += this.isIntegerColumn(column) ? `CAST(${column} AS TEXT)` : column;
     sql += ` LIKE ?`;
@@ -235,24 +228,23 @@ export abstract class Model {
     return await DbHelper.get<T>(sql, [params]);
   }
 
-  public static async getByColumn<T>(column: keyof typeof this.schema, value: number | string):  Promise<any[]> {
+  public static async getByColumn<T>(column: keyof typeof this.schema, value: number | string):  Promise<T[]> {
     let sql = `SELECT * FROM ${this.table} WHERE ${column} = ?`;
     return await DbHelper.get<T>(sql, [value]);
   }
 
-  public static async getByColumns<T>(columns: (keyof typeof this.schema)[], values: any[]): Promise<any[]> {
+  public static async getByColumns<T>(columns: (keyof typeof this.schema)[], values: any[]): Promise<T[]> {
     let sql = `SELECT * FROM ${this.table} `;
 
     columns.forEach((column, index) => {
-      let prefix = index == 0 ? 'WHERE' : 'AND'
+      let prefix = index == 0 ? 'WHERE' : 'AND';
       sql += `${prefix} ${column} = ? `;
     });
 
     return await DbHelper.get<T>(sql, values);
-  };
+  }
 
-  public static async firstWhereRaw<T>(condition: string): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async firstWhereRaw<T>(condition: string): Promise<T | null> {
     try {
       if (condition) {
         let sql =  `SELECT * FROM ${this.table}`;
@@ -261,18 +253,17 @@ export abstract class Model {
         sql += condition.toLowerCase().includes('limit') ? '' : '  LIMIT 1';
 
         let retornoQuery = await DbHelper.find<T>(sql);
-        response = retornoQuery ?? response;
+        return retornoQuery ?? null;
       }
 
-      return {success: Object.keys(response).length > 0, data: response};
+      return null;
     } catch (error) {
       console.error('Model.firstWhereRaw() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
-  public static async firstLike<T>(column: keyof typeof this.schema, value: number | string): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async firstLike<T>(column: keyof typeof this.schema, value: number | string): Promise<T | null> {
     try {
       let sql = `SELECT * FROM ${this.table} WHERE `;
       sql += this.isIntegerColumn(column) ? `CAST(${column} AS TEXT)` : column;
@@ -280,50 +271,42 @@ export abstract class Model {
       let params = [`%${value}%`];
 
       let retornoQuery = await DbHelper.find<T>(sql, params);
-      response = retornoQuery ?? response;
-
-      return {success: Object.keys(response).length > 0, data: response};
+      return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.firstLike() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
-  public static async firstByColumn<T>(column: keyof typeof this.schema, value: number | string): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async firstByColumn<T>(column: keyof typeof this.schema, value: number | string): Promise<T | null> {
     try {
       let sql = `SELECT * FROM ${this.table} WHERE ${column} = ? LIMIT 1`;
 
-      let retornoQuery = await DbHelper.find<T>(sql,  [value]);
-      response = retornoQuery ?? response;
-
-      return {success: Object.keys(response).length > 0, data: response};
+      let retornoQuery = await DbHelper.find<T>(sql, [value]);
+      return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.firstByColumn() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
-  public static async firstByColumns<T>(columns: (keyof typeof this.schema)[], values: any[]): Promise<IFindResponse<any>> {
-    let response: any = {};
+  public static async firstByColumns<T>(columns: (keyof typeof this.schema)[], values: any[]): Promise<T | null> {
     try {
       let sql = `SELECT * FROM ${this.table} `;
 
       columns.forEach((column, index) => {
-        let prefix = index == 0 ? 'WHERE' : 'AND'
+        let prefix = index == 0 ? 'WHERE' : 'AND';
         sql += `${prefix} ${column} =  ? `;
       });
       sql += ' LIMIT 1';
 
       let retornoQuery = await DbHelper.find<T>(sql, values);
-      response = retornoQuery ?? response;
-
-      return {success: Object.keys(response).length > 0, data: response};
+      return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.firstByColumns() -->', error);
-      return {success:false, data: response, message: 'Nenhum registro encontrado!'};
+      return null;
     }
-  };
+  }
 
   public static mountInsertScript(values: any | any[], insertWithPrmaryKey: boolean = true): { sql: string; params: any[] } {
     values = Array.isArray(values) ? values : [values];
@@ -333,8 +316,8 @@ export abstract class Model {
     let columns = insertWithPrmaryKey ? Object.keys(this.schema) : Object.keys(this.schema).filter(column => column !== this.primaryKey);
     let bindingTemplate = this.mountInsertBindingTemplate(columns.length, values.length);
 
-    let sql =  `INSERT OR REPLACE INTO ${this.table} (${columns.join(', ')}) VALUES ${bindingTemplate}`;
-    let params: any [] = this.mountInsertArray(values, integerColumns, columns);
+    let sql = `INSERT OR REPLACE INTO ${this.table} (${columns.join(', ')}) VALUES ${bindingTemplate}`;
+    let params: any[] = this.mountInsertArray(values, integerColumns, columns);
 
     return {sql, params};
   }
@@ -363,14 +346,14 @@ export abstract class Model {
     Object.keys(values).forEach((key) => {
       if (key != this.primaryKey) {
         bindingTemplate += `${key} = ?, `;
-        let newValue = values[key]
+        let newValue = values[key];
         if (integerColumns.includes(key)) {
           newValue = newValue ? Number(values[key]) : null;
         }
 
-        params.push(newValue)
+        params.push(newValue);
       }
-    })
+    });
 
     // Remover vírgula e espaço do final da string
     bindingTemplate = bindingTemplate.slice(0, -2);
@@ -381,7 +364,7 @@ export abstract class Model {
     return { sql, params };
   }
 
-  private static getIntegerColumns(): string[]  {
+  private static getIntegerColumns(): string[] {
     let integerColumns: string[] = [];
     Object.entries(this.schema).forEach(([colName, colType]) => {
       if (colType.includes('INTEGER')) {
@@ -392,7 +375,7 @@ export abstract class Model {
     return integerColumns;
   }
 
-  private static isIntegerColumn(column: keyof typeof this.schema): boolean  {
+  private static isIntegerColumn(column: keyof typeof this.schema): boolean {
     let columnType = this.schema[column];
     return columnType.includes('INTEGER');
   }
