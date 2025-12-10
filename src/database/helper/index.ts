@@ -16,7 +16,7 @@ export class DbHelper {
     }
   }
 
-  static async find<T>(sql: string, params?: any[]): Promise<T | undefined> {
+  static async find<T>(sql: string, params?: any[]): Promise<T | null> {
     try {
       let db = await getDbConnection();
       let results = await db.executeSql(sql, params ? params.flat() : []);
@@ -26,10 +26,10 @@ export class DbHelper {
         response = result.rows.item(0) ?? response;
       });
 
-      return Object.keys(response).length > 0 ? response as T : undefined;
+      return Object.keys(response).length > 0 ? response as T : null;
     } catch (error) {
       console.error('DbHelper.find()', error);
-      return undefined;
+      return null;
     }
   }
 
