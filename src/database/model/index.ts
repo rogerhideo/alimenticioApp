@@ -92,11 +92,10 @@ export abstract class Model {
 
   public static async find<T>(id: number | string): Promise<T | null> {
     try {
-      let sql = `SELECT * FROM ${this.table} WHERE ${this.primaryKey} = ? `;
+      let sql = `SELECT * FROM ${this.table} WHERE ${this.primaryKey} = ?`;
       sql += ' LIMIT 1';
 
-      let retornoQuery = await DbHelper.find<T>(sql, [id]);
-      return retornoQuery ?? null;
+      return await DbHelper.find<T>(sql, [id]);
     } catch (error) {
       console.error('Model.find() -->', error);
       return null;
@@ -594,13 +593,13 @@ export abstract class Model {
     params: Record<keyof typeof this.schema, number | number[] | string | string[]>,
     operator: 'IN' | 'NOT IN' = 'IN'
   ): { whereClause: string; bindingParams: any[] } {
+    let whereClause = '';
+    let bindingParams: any[] = [];
+
     try {
       let objEntries = Object.entries(params);
-
-      let whereClause = '';
-      let bindingParams: any[] = [];
       if (objEntries.length == 0) {
-        return {whereClause, bindingParams};
+        return { whereClause, bindingParams };
       }
 
       let entriesCount = 0;
@@ -615,14 +614,10 @@ export abstract class Model {
           entriesCount++;
         }
       })
-
-      let sql = `SELECT * FROM ${this.table} WHERE ${whereClause} LIMIT 1`;
-
-      return {whereClause, bindingParams}
     } catch (error) {
       console.error('Model.firstWhere() -->', error);
-      return null;
     }
+    return { whereClause, bindingParams };
   };
 }
 
