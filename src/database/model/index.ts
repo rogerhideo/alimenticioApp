@@ -90,6 +90,19 @@ export abstract class Model {
     }
   };
 
+  public static async allOrderBy<T>(column: keyof typeof this.schema, direction?: 'DESC' | 'ASC', limit?: number): Promise<any[]> {
+    try {
+      let sql = `SELECT * FROM ${this.table} ORDER BY ${column}`;
+      sql += direction ? ` ${direction}` : '';
+      sql += limit ? ` LIMIT ${limit}` : '';
+
+      return await DbHelper.get<T>(sql);
+    } catch (error) {
+      console.error('Model.all() -->', error);
+      return [];
+    }
+  };
+
   public static async find<T>(id: number | string): Promise<T | null> {
     try {
       let sql = `SELECT * FROM ${this.table} WHERE ${this.primaryKey} = ?`;
@@ -299,9 +312,9 @@ export abstract class Model {
    */
   public static async insert(values: any | any[], insertWithPrmaryKey?: boolean): Promise<boolean> {
     try {
-      const pkType = this.schema[this.primaryKey];
+      const pkType = this.schema[this.primaryKey] as string;
       insertWithPrmaryKey = insertWithPrmaryKey || !pkType.includes('AUTOINCREMENT');
-      
+
       let {sql, params} = this.mountInsertScript(values, insertWithPrmaryKey);
       let result = await DbHelper.execute(sql, params);
 
@@ -309,6 +322,22 @@ export abstract class Model {
     } catch (error) {
       console.error('Model.insert() -->', error);
       return false;
+    }
+  }
+
+  public static async insertReturnId(values: any | any[], insertWithPrmaryKey?: boolean): Promise<number> {
+    let retornoDefault: number = 0;
+    try {
+      const pkType = this.schema[this.primaryKey] as string;
+      insertWithPrmaryKey = insertWithPrmaryKey || !pkType.includes('AUTOINCREMENT');
+
+      let {sql, params} = this.mountInsertScript(values, insertWithPrmaryKey);
+      let result = await DbHelper.execute(sql, params);
+
+      return result.length > 0 ? result[0].insertId : retornoDefault;
+    } catch (error) {
+      console.error('Model.insert() -->', error);
+      return retornoDefault;
     }
   }
 
