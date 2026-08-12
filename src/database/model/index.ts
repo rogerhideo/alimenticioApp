@@ -297,8 +297,11 @@ export abstract class Model {
    * @param insertWithPrmaryKey boolean - false para casos onde a primary key é auto increment e o valor não é preenchido
    * @returns boolean
    */
-  public static async insert(values: any | any[], insertWithPrmaryKey: boolean = true): Promise<boolean> {
+  public static async insert(values: any | any[], insertWithPrmaryKey?: boolean): Promise<boolean> {
     try {
+      const pkType = this.schema[this.primaryKey];
+      insertWithPrmaryKey = insertWithPrmaryKey || !pkType.includes('AUTOINCREMENT');
+      
       let {sql, params} = this.mountInsertScript(values, insertWithPrmaryKey);
       let result = await DbHelper.execute(sql, params);
 
