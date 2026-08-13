@@ -16,7 +16,7 @@ export class DbHelper {
     }
   }
 
-  static async find<T>(sql: string, params?: any[]): Promise<T | null> {
+  static async first<T>(sql: string, params?: any[]): Promise<T | null> {
     try {
       let db = await getDbConnection();
       let results = await db.executeSql(sql, params ? params.flat() : []);

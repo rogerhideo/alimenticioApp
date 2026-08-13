@@ -56,7 +56,7 @@ export abstract class Model {
   public static async first<T>(sql: string, params?: any[]): Promise<T | null> {
     try {
       sql += sql.toLowerCase().includes('limit') ? '': ' LIMIT 1';
-      let retornoQuery = await DbHelper.find<T>(sql, params);
+      let retornoQuery = await DbHelper.first<T>(sql, params);
       return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.first() -->', error);
@@ -108,7 +108,7 @@ export abstract class Model {
       let sql = `SELECT * FROM ${this.table} WHERE ${this.primaryKey} = ?`;
       sql += ' LIMIT 1';
 
-      return await DbHelper.find<T>(sql, [id]);
+      return await DbHelper.first<T>(sql, [id]);
     } catch (error) {
       console.error('Model.find() -->', error);
       return null;
@@ -220,7 +220,7 @@ export abstract class Model {
       }
 
       let sql = `SELECT * FROM ${this.table} WHERE ${whereClause} LIMIT 1`;
-      return await DbHelper.find<T>(sql, bindingParams);
+      return await DbHelper.first<T>(sql, bindingParams);
     } catch (error) {
       console.error('Model.firstWhere() -->', error);
       return null;
@@ -259,7 +259,7 @@ export abstract class Model {
       }
 
       let sql = `SELECT * FROM ${this.table} WHERE ${whereClause} LIMIT 1`;
-      return await DbHelper.find<T>(sql, bindingParams);
+      return await DbHelper.first<T>(sql, bindingParams);
     } catch (error) {
       console.error('Model.firstWhereNot() -->', error);
       return null;
@@ -409,7 +409,7 @@ export abstract class Model {
         sql += ' ' + condition;
         sql += condition.toLowerCase().includes('limit') ? '' : '  LIMIT 1';
 
-        let retornoQuery = await DbHelper.find<T>(sql);
+        let retornoQuery = await DbHelper.first<T>(sql);
         return retornoQuery ?? null;
       }
 
@@ -447,7 +447,7 @@ export abstract class Model {
       sql += " LIKE ? LIMIT 1";
       let params = [`%${value}%`];
 
-      let retornoQuery = await DbHelper.find<T>(sql, params);
+      let retornoQuery = await DbHelper.first<T>(sql, params);
       return  retornoQuery ?? null;
     } catch (error) {
       console.error('Model.firstLike() -->', error);
@@ -477,7 +477,7 @@ export abstract class Model {
     try {
       let sql = `SELECT * FROM ${this.table} WHERE ${column} = ? LIMIT 1`;
 
-      let retornoQuery = await DbHelper.find<T>(sql,  [value]);
+      let retornoQuery = await DbHelper.first<T>(sql,  [value]);
       return retornoQuery ?? null;
     } catch (error) {
       console.error('Model.firstByColumn() -->', error);
